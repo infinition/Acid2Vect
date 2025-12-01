@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acid2Vect - Vectorizer</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: #09090b;
+            /* zinc-950 */
+            color: #e4e4e7;
+            /* zinc-200 */
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- ACID THEME UTILS --- */
+        .glass-panel {
+            background: rgba(24, 24, 27, 0.95);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid rgba(63, 63, 70, 0.5);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out;
+        }
+
+        .interaction-fade {
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .tech-bg {
+            background-image: linear-gradient(rgba(39, 39, 42, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(39, 39, 42, 0.3) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Checkboard for transparency */
+        .bg-checkboard {
+            background-image:
+                linear-gradient(45deg, #18181b 25%, transparent 25%),
+                linear-gradient(135deg, #18181b 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #18181b 75%),
+                linear-gradient(135deg, transparent 75%, #18181b 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 0, 10px -10px, 0px 10px;
+            background-color: #09090b;
+        }
+
+        /* Range Slider */
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: #27272a;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 0;
+            background: #84cc16;
+            /* lime-500 */
+            border: 2px solid #09090b;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 0 8px rgba(132, 204, 22, 0.6);
+        }
+
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #a3e635;
+        }
+
+        /* Loader */
+        .loader {
+            border: 3px solid #27272a;
+            border-top: 3px solid #84cc16;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #drop-zone.dragover {
+            border-color: #84cc16;
+            background-color: rgba(132, 204, 22, 0.1);
+            box-shadow: inset 0 0 20px rgba(132, 204, 22, 0.2);
+        }
+
+        .hidden-tab {
+            display: none !important;
+        }
+
+        .cursor-grab {
+            cursor: grab;
+        }
+
+        .cursor-grabbing {
+            cursor: grabbing;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body class="h-screen w-screen flex bg-zinc-950 text-zinc-300 overflow-hidden">
+
+    <!-- Mobile FAB (Menu) -->
+    <button id="mobile-menu-btn"
+        class="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-lime-600 text-black rounded-full shadow-[0_0_20px_rgba(132,204,22,0.4)] flex items-center justify-center active:scale-95 transition-transform border-2 border-lime-400">
+        <i data-lucide="sliders-horizontal" class="w-6 h-6"></i>
+    </button>
+
+    <!-- Sidebar Controls -->
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 w-80 lg:w-96 glass-panel z-40 flex flex-col transform -translate-x-full lg:translate-x-0 shadow-2xl h-full">
+
+        <!-- Header -->
+        <div class="p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50">
+            <h1 class="text-2xl font-bold tracking-widest text-white flex items-center gap-2">
+                <span class="w-3 h-3 bg-lime-500 rounded-sm shadow-[0_0_8px_#84cc16]"></span>
+                ACID<span class="text-lime-400 font-light">2VECT</span>
+            </h1>
+            <div class="flex items-center gap-2">
+                <div id="status-indicator" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                <span id="status-text" class="text-[10px] font-mono text-zinc-500">INIT</span>
+            </div>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
+
+            <!-- Upload -->
+            <div id="drop-zone"
+                class="border border-dashed border-zinc-600 bg-zinc-900/50 rounded p-6 text-center transition-all cursor-pointer group relative hover:border-lime-500/50 hover:bg-zinc-800/80">
+                <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    accept="image/*" />
+                <div class="text-lime-500 text-3xl mb-2 group-hover:scale-110 transition-transform">
+                    <i data-lucide="image-plus" class="w-8 h-8 mx-auto"></i>
+                </div>
+                <p class="text-xs text-zinc-400 font-bold tracking-widest uppercase group-hover:text-white">IMAGE SOURCE
+                </p>
+                <img id="mini-preview" class="absolute inset-0 w-full h-full object-cover opacity-30 hidden rounded" />
+            </div>
+
+            <!-- Filters (Pre-process) -->
+            <div class="space-y-4">
+                <h3
+                    class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold border-b border-zinc-800 pb-1">
+                    Pre-processing</h3>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs text-zinc-400 font-medium">BRIGHTNESS</label>
+                        <span id="val-brightness" class="text-xs font-mono text-lime-400">0%</span>
+                    </div>
+                    <input type="range" id="input-brightness" min="-100" max="100" step="5" value="0"
+                        class="range-slider">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs text-zinc-400 font-medium">CONTRAST</label>
+                        <span id="val-contrast" class="text-xs font-mono text-lime-400">0%</span>
+                    </div>
+                    <input type="range" id="input-contrast" min="-100" max="100" step="5" value="0"
+                        class="range-slider">
+                </div>
+            </div>
+
+            <!-- Vector Settings -->
+            <div class="space-y-4">
+                <h3
+                    class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold border-b border-zinc-800 pb-1">
+                    Vectorization</h3>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs text-zinc-400 font-medium">COLORS</label>
+                        <span id="val-colors" class="text-xs font-mono text-lime-400">16</span>
+                    </div>
+                    <input type="range" id="input-colors" min="2" max="64" step="1" value="16" class="range-slider">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs text-zinc-400 font-medium">SMOOTH (BLUR)</label>
+                        <span id="val-blur" class="text-xs font-mono text-lime-400">0 px</span>
+                    </div>
+                    <input type="range" id="input-blur" min="0" max="10" step="0.5" value="0" class="range-slider">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs text-zinc-400 font-medium">NOISE REDUCTION</label>
+                        <span id="val-omit" class="text-xs font-mono text-lime-400">8 px</span>
+                    </div>
+                    <input type="range" id="input-omit" min="0" max="100" step="1" value="8" class="range-slider">
+                </div>
+
+                <!-- Advanced fold -->
+                <details class="group">
+                    <summary
+                        class="text-[10px] uppercase tracking-wider text-zinc-500 cursor-pointer list-none flex items-center gap-2 mb-2">
+                        <i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i>
+                        Advanced
+                    </summary>
+                    <div class="pl-2 space-y-4 border-l border-zinc-800 mt-2">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-[10px] text-zinc-400">Curve Smoothing</label>
+                                <span id="val-qtres" class="text-[10px] font-mono text-lime-500">1.0</span>
+                            </div>
+                            <input type="range" id="input-qtres" min="0.1" max="5" step="0.1" value="1.0"
+                                class="range-slider">
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-[10px] text-zinc-400">Line Smoothing</label>
+                                <span id="val-ltres" class="text-[10px] font-mono text-lime-500">1.0</span>
+                            </div>
+                            <input type="range" id="input-ltres" min="0.1" max="5" step="0.1" value="1.0"
+                                class="range-slider">
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Spacer Mobile -->
+            <div class="h-10 lg:hidden"></div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-5 border-t border-zinc-800 bg-zinc-950">
+            <button id="btn-process" disabled
+                class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-300 hover:text-white font-bold rounded-sm border border-zinc-700 transition flex items-center justify-center gap-2 group">
+                <i data-lucide="zap" class="w-4 h-4 group-hover:text-lime-400"></i>
+                <span id="btn-text">WAITING</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Overlay Close Area (Mobile) -->
+    <div id="mobile-overlay"
+        class="lg:hidden fixed inset-0 z-30 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex flex-col relative tech-bg h-full lg:ml-96 transition-all duration-300">
+
+        <!-- Floating Tabs & Tools -->
+        <div
+            class="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2 w-[90%] max-w-md">
+
+            <!-- Tab Switcher -->
+            <div class="flex bg-zinc-900/90 backdrop-blur border border-zinc-700 rounded-full p-1 shadow-xl">
+                <button onclick="switchTab('original')" id="tab-original"
+                    class="px-4 py-1.5 text-xs font-bold rounded-full transition-colors text-zinc-400 hover:text-white">SOURCE</button>
+                <button onclick="switchTab('split')" id="tab-split"
+                    class="px-4 py-1.5 text-xs font-bold rounded-full transition-colors bg-lime-600 text-black shadow-[0_0_10px_rgba(132,204,22,0.4)]">COMPARE</button>
+                <button onclick="switchTab('vector')" id="tab-vector"
+                    class="px-4 py-1.5 text-xs font-bold rounded-full transition-colors text-zinc-400 hover:text-white">RESULT</button>
+            </div>
+
+            <!-- Zoom Tools (Desktop mostly, but handy on tablets) -->
+            <div class="hidden sm:flex items-center gap-1 bg-zinc-900/80 border border-zinc-800 rounded p-1">
+                <button onclick="zoomCanvas(-0.2)" class="p-1 hover:text-lime-400"><i data-lucide="minus"
+                        class="w-3 h-3"></i></button>
+                <span id="zoom-level" class="text-[10px] font-mono w-8 text-center">100%</span>
+                <button onclick="zoomCanvas(0.2)" class="p-1 hover:text-lime-400"><i data-lucide="plus"
+                        class="w-3 h-3"></i></button>
+                <button onclick="resetZoom()" class="p-1 border-l border-zinc-700 ml-1 hover:text-white"><i
+                        data-lucide="maximize" class="w-3 h-3"></i></button>
+            </div>
+        </div>
+
+        <!-- Download Buttons (Bottom Right) -->
+        <div class="absolute bottom-6 left-6 z-20 flex gap-2">
+            <button id="btn-download-svg" disabled onclick="downloadSVG()"
+                class="flex items-center gap-2 px-3 py-2 bg-zinc-900 text-zinc-400 border border-zinc-700 hover:border-lime-500 hover:text-lime-400 rounded shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                <i data-lucide="download" class="w-4 h-4"></i> <span class="text-xs font-bold">SVG</span>
+            </button>
+            <button id="btn-download-png" disabled onclick="downloadPNG()"
+                class="flex items-center gap-2 px-3 py-2 bg-zinc-900 text-zinc-400 border border-zinc-700 hover:border-blue-500 hover:text-blue-400 rounded shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                <i data-lucide="image" class="w-4 h-4"></i> <span class="text-xs font-bold">PNG</span>
+            </button>
+        </div>
+
+        <!-- Viewport -->
+        <div id="viewport"
+            class="flex-1 overflow-hidden relative cursor-grab active:cursor-grabbing touch-none flex items-center justify-center">
+
+            <!-- Empty State -->
+            <div id="view-empty" class="text-center opacity-20 pointer-events-none">
+                <i data-lucide="layers" class="w-24 h-24 mx-auto mb-4 text-zinc-500"></i>
+                <h2 class="text-4xl font-bold text-zinc-600 tracking-tighter">ACID2VECT</h2>
+            </div>
+
+            <!-- Transform Container -->
+            <div id="transform-layer" class="origin-center transition-transform duration-75 ease-out hidden">
+
+                <!-- View: Original -->
+                <div id="view-original" class="hidden-tab shadow-2xl border border-zinc-800">
+                    <canvas id="canvas-preview"
+                        class="max-w-[90vw] max-h-[80vh] object-contain pointer-events-none block"></canvas>
+                </div>
+
+                <!-- View: Vector -->
+                <div id="view-vector" class="hidden-tab shadow-2xl border border-zinc-800 bg-checkboard">
+                    <div id="svg-full" class="w-[90vw] h-[80vh] flex items-center justify-center pointer-events-none">
+                    </div>
+                </div>
+
+                <!-- View: Split (Comparison) -->
+                <!-- Mobile: flex-col (Vertical), Desktop: flex-row (Horizontal) -->
+                <div id="view-split"
+                    class="relative shadow-2xl border border-zinc-800 bg-zinc-950 flex flex-col lg:flex-row w-[90vw] h-[80vh] lg:w-auto lg:h-auto lg:max-w-[95vw] lg:max-h-[85vh]">
+
+                    <!-- Raster Part -->
+                    <div
+                        class="relative overflow-hidden border-b lg:border-b-0 lg:border-r border-zinc-700 group flex-1 w-full h-1/2 lg:w-1/2 lg:h-full">
+                        <span
+                            class="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 rounded text-zinc-400 z-10 font-bold border border-zinc-700 bg-zinc-900">RASTER</span>
+                        <canvas id="canvas-split" class="block object-contain w-full h-full"></canvas>
+                    </div>
+
+                    <!-- Vector Part -->
+                    <div class="relative overflow-hidden bg-checkboard group flex-1 w-full h-1/2 lg:w-1/2 lg:h-full">
+                        <span
+                            class="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded text-lime-400 z-10 font-bold border border-zinc-700 bg-zinc-900">VECTOR</span>
+                        <div id="svg-split" class="flex items-center justify-center w-full h-full"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- App Logic -->
+    <script>
+        // --- CDN Configuration ---
+        const SCRIPT_SOURCES = [
+            "https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js",
+            "https://unpkg.com/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"
+        ];
+
+        // --- State ---
+        const state = {
+            rawImgSrc: null,
+            filteredImgData: null,
+            svgStr: null,
+            processing: false,
+            engineReady: false,
+            scale: 1,
+            panning: false,
+            panX: 0,
+            panY: 0,
+            startX: 0,
+            startY: 0,
+            scriptIndex: 0,
+            isMenuOpen: false
+        };
+
+        // --- UI Refs ---
+        const ui = {
+            sidebar: document.getElementById('sidebar'),
+            mobileOverlay: document.getElementById('mobile-overlay'),
+            mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+            fileInput: document.getElementById('file-input'),
+            dropZone: document.getElementById('drop-zone'),
+            miniPreview: document.getElementById('mini-preview'),
+
+            inputs: {
+                colors: document.getElementById('input-colors'),
+                blur: document.getElementById('input-blur'),
+                omit: document.getElementById('input-omit'),
+                ltres: document.getElementById('input-ltres'),
+                qtres: document.getElementById('input-qtres'),
+                brightness: document.getElementById('input-brightness'),
+                contrast: document.getElementById('input-contrast'),
+            },
+            displays: {
+                colors: document.getElementById('val-colors'),
+                blur: document.getElementById('val-blur'),
+                omit: document.getElementById('val-omit'),
+                ltres: document.getElementById('val-ltres'),
+                qtres: document.getElementById('val-qtres'),
+                brightness: document.getElementById('val-brightness'),
+                contrast: document.getElementById('val-contrast'),
+            },
+
+            btnProcess: document.getElementById('btn-process'),
+            btnText: document.getElementById('btn-text'),
+            btnDownloadSvg: document.getElementById('btn-download-svg'),
+            btnDownloadPng: document.getElementById('btn-download-png'),
+
+            statusIndicator: document.getElementById('status-indicator'),
+            statusText: document.getElementById('status-text'),
+
+            viewport: document.getElementById('viewport'),
+            transformLayer: document.getElementById('transform-layer'),
+            zoomLevel: document.getElementById('zoom-level'),
+
+            views: {
+                empty: document.getElementById('view-empty'),
+                original: document.getElementById('view-original'),
+                vector: document.getElementById('view-vector'),
+                split: document.getElementById('view-split'),
+            },
+
+            content: {
+                canvasPreview: document.getElementById('canvas-preview'),
+                canvasSplit: document.getElementById('canvas-split'),
+                svgFull: document.getElementById('svg-full'),
+                svgSplit: document.getElementById('svg-split'),
+            }
+        };
+
+        // --- Initialization ---
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+            loadVectorEngine();
+            initZoomPan();
+            setupInputs();
+            setupInteractionFade();
+        });
+
+        // --- Interaction Fade (Transparency on Slide) ---
+        function setupInteractionFade() {
+            const sliders = document.querySelectorAll('input[type="range"]');
+            const startFade = () => ui.sidebar.classList.add('interaction-fade');
+            const endFade = () => ui.sidebar.classList.remove('interaction-fade');
+
+            sliders.forEach(slider => {
+                slider.addEventListener('pointerdown', startFade);
+                window.addEventListener('pointerup', endFade);
+                window.addEventListener('pointercancel', endFade);
+            });
+        }
+
+        // --- Mobile Menu ---
+        function toggleMenu(force) {
+            const isOpen = force !== undefined ? force : !state.isMenuOpen;
+            state.isMenuOpen = isOpen;
+
+            if (isOpen) {
+                ui.sidebar.classList.remove('-translate-x-full');
+                ui.mobileOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                ui.sidebar.classList.add('-translate-x-full');
+                ui.mobileOverlay.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+        ui.mobileMenuBtn.addEventListener('click', () => toggleMenu());
+        ui.mobileOverlay.addEventListener('click', () => toggleMenu(false));
+
+        // --- Engine Loading ---
+        function loadVectorEngine() {
+            if (typeof window.ImageTracer !== 'undefined') {
+                setEngineStatus('ready');
+                return;
+            }
+            setEngineStatus('loading');
+
+            const script = document.createElement('script');
+            script.src = SCRIPT_SOURCES[state.scriptIndex];
+            script.async = true;
+            script.onload = () => setEngineStatus('ready');
+            script.onerror = () => {
+                if (state.scriptIndex < SCRIPT_SOURCES.length - 1) {
+                    state.scriptIndex++;
+                    loadVectorEngine();
+                } else {
+                    setEngineStatus('error');
+                }
+            };
+            document.body.appendChild(script);
+        }
+
+        function setEngineStatus(status) {
+            ui.statusIndicator.className = 'w-2 h-2 rounded-full';
+            if (status === 'loading') {
+                ui.statusIndicator.classList.add('bg-yellow-500', 'animate-pulse');
+                ui.statusText.innerText = 'LOADING...';
+            } else if (status === 'ready') {
+                state.engineReady = true;
+                ui.statusIndicator.classList.add('bg-lime-500', 'shadow-[0_0_5px_#84cc16]');
+                ui.statusText.innerText = 'READY';
+                ui.statusText.classList.add('text-lime-500');
+                if (state.rawImgSrc && !state.processing) updateProcessBtn(true);
+            } else {
+                ui.statusIndicator.classList.add('bg-red-500');
+                ui.statusText.innerText = 'ERROR';
+            }
+        }
+
+        // --- Real-time Processing (Debounce) ---
+        let debounceTimer;
+        function debouncedVectorization() {
+            // Immediately show loading state to give feedback
+            updateProcessBtn(false, true);
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                applyFiltersAndProcess();
+            }, 500); // 500ms delay
+        }
+
+        // --- Inputs ---
+        function setupInputs() {
+            const updateDisplay = (key, val) => {
+                let suffix = '';
+                if (key === 'blur' || key === 'omit') suffix = ' px';
+                if (key === 'brightness' || key === 'contrast') suffix = '%';
+                if (ui.displays[key]) ui.displays[key].innerText = val + suffix;
+            };
+
+            Object.keys(ui.inputs).forEach(key => {
+                ui.inputs[key].addEventListener('input', (e) => {
+                    updateDisplay(key, e.target.value);
+
+                    // Trigger real-time updates based on input type
+                    if (['brightness', 'contrast'].includes(key)) {
+                        if (state.rawImgSrc) applyFiltersToCanvas();
+                        debouncedVectorization(); // Also re-vectorize after filter change
+                    } else {
+                        // Vector params
+                        if (state.rawImgSrc) debouncedVectorization();
+                    }
+                });
+            });
+
+            ui.fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+            ui.dropZone.addEventListener('dragover', e => { e.preventDefault(); ui.dropZone.classList.add('dragover'); });
+            ui.dropZone.addEventListener('dragleave', e => { e.preventDefault(); ui.dropZone.classList.remove('dragover'); });
+            ui.dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                ui.dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+            });
+
+            ui.btnProcess.addEventListener('click', applyFiltersAndProcess);
+        }
+
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.rawImgSrc = e.target.result;
+                ui.miniPreview.src = state.rawImgSrc;
+                ui.miniPreview.classList.remove('hidden');
+
+                ui.views.empty.classList.add('hidden');
+                ui.transformLayer.classList.remove('hidden');
+
+                state.svgStr = null;
+                resetZoom();
+                applyFiltersToCanvas(); // Draw initial
+                updateProcessBtn(true);
+
+                // Auto switch to split view to confirm image loaded
+                switchTab('split');
+
+                // Auto close menu on mobile
+                if (window.innerWidth < 1024) toggleMenu(false);
+
+                // Initial auto-process
+                debouncedVectorization();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- Core Logic ---
+        function applyFiltersToCanvas() {
+            if (!state.rawImgSrc) return;
+            const img = new Image();
+            img.onload = () => {
+                let w = img.width;
+                let h = img.height;
+
+                // Update Canvases
+                [ui.content.canvasPreview, ui.content.canvasSplit].forEach(canvas => {
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+
+                    const b = ui.inputs.brightness.value;
+                    const c = ui.inputs.contrast.value;
+                    ctx.filter = `brightness(${100 + parseInt(b)}%) contrast(${100 + parseInt(c)}%)`;
+
+                    ctx.drawImage(img, 0, 0, w, h);
+                });
+            };
+            img.src = state.rawImgSrc;
+        }
+
+        function applyFiltersAndProcess() {
+            if (!state.rawImgSrc || state.processing || !state.engineReady) return;
+            // Ensure filters are applied to the canvas data we are about to read
+            state.filteredImgData = ui.content.canvasPreview.toDataURL('image/png');
+            runVectorization();
+        }
+
+        function runVectorization() {
+            state.processing = true;
+            // Update button to show processing state
+            updateProcessBtn(false, true);
+
+            setTimeout(() => {
+                try {
+                    const opts = {
+                        numberofcolors: parseInt(ui.inputs.colors.value),
+                        blurradius: parseFloat(ui.inputs.blur.value),
+                        pathomit: parseInt(ui.inputs.omit.value),
+                        ltres: parseFloat(ui.inputs.ltres.value),
+                        qtres: parseFloat(ui.inputs.qtres.value),
+                        strokewidth: 0,
+                        viewbox: true,
+                        scale: 1
+                    };
+
+                    window.ImageTracer.imageToSVG(state.filteredImgData, (svgstr) => {
+                        state.svgStr = svgstr;
+                        renderSVG(svgstr);
+                        state.processing = false;
+                        updateProcessBtn(true);
+                        ui.btnDownloadSvg.disabled = false;
+                        ui.btnDownloadPng.disabled = false;
+
+                        // If we are on Result tab, ensure it's visible (handling potentially stale display:none)
+                        if (!ui.views.vector.classList.contains('hidden-tab')) {
+                            ui.views.vector.style.display = '';
+                        }
+                    }, opts);
+                } catch (err) {
+                    console.error(err);
+                    state.processing = false;
+                    updateProcessBtn(true);
+                    alert("Error during vectorization.");
+                }
+            }, 50);
+        }
+
+        function renderSVG(svgstr) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(svgstr, "image/svg+xml");
+            const svgEl = doc.documentElement;
+
+            // Clean attributes to ensure scaling
+            svgEl.removeAttribute('width');
+            svgEl.removeAttribute('height');
+            svgEl.setAttribute('width', '100%');
+            svgEl.setAttribute('height', '100%');
+
+            const cleanSvg = svgEl.outerHTML;
+            ui.content.svgFull.innerHTML = cleanSvg;
+            ui.content.svgSplit.innerHTML = cleanSvg;
+        }
+
+        // --- Downloads ---
+        function downloadSVG() {
+            if (!state.svgStr) return;
+            const blob = new Blob([state.svgStr], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Acid2Vect_${Date.now()}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function downloadPNG() {
+            if (!state.svgStr) return;
+            const img = new Image();
+            const svgBlob = new Blob([state.svgStr], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                canvas.width = ui.content.canvasPreview.width;
+                canvas.height = ui.content.canvasPreview.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const pngUrl = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = pngUrl;
+                a.download = `Acid2Vect_${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+            img.src = url;
+        }
+
+        // --- Helpers ---
+        function updateProcessBtn(enabled, processing = false) {
+            const btn = ui.btnProcess;
+
+            if (processing) {
+                btn.disabled = true;
+                btn.innerHTML = `<div class="loader !w-4 !h-4 !border-2"></div><span class="text-lime-400">UPDATING...</span>`;
+            } else if (enabled) {
+                btn.disabled = false;
+                btn.className = "w-full py-3 bg-lime-700 hover:bg-lime-600 text-white font-bold rounded-sm border border-lime-500 transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(132,204,22,0.3)]";
+                btn.innerHTML = `<i data-lucide="zap" class="w-4 h-4"></i><span>VECTORIZE</span>`;
+            } else {
+                btn.disabled = true;
+                btn.className = "w-full py-3 bg-zinc-800 text-zinc-500 font-bold rounded-sm border border-zinc-700 transition flex items-center justify-center gap-2 cursor-not-allowed";
+                btn.innerHTML = `<span>STANDBY</span>`;
+            }
+            lucide.createIcons();
+        }
+
+        window.switchTab = function (name) {
+            ['original', 'split', 'vector'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const view = ui.views[t];
+
+                if (t === name) {
+                    btn.classList.remove('text-zinc-400', 'hover:text-white');
+                    // Style specific per tab for active state
+                    if (t === 'split') btn.className = "px-4 py-1.5 text-xs font-bold rounded-full transition-colors bg-lime-600 text-black shadow-[0_0_10px_rgba(132,204,22,0.4)]";
+                    else btn.className = "px-4 py-1.5 text-xs font-bold rounded-full transition-colors bg-zinc-700 text-white border border-zinc-600";
+
+                    view.classList.remove('hidden-tab');
+
+                    // Explicitly manage display property to avoid conflicts with previous 'none' styles
+                    if (t === 'split') {
+                        view.style.display = 'flex';
+                    } else {
+                        view.style.display = ''; // Clear inline styles to let CSS class take over (block by default for divs)
+                    }
+                } else {
+                    btn.className = "px-4 py-1.5 text-xs font-bold rounded-full transition-colors text-zinc-400 hover:text-white";
+                    view.classList.add('hidden-tab');
+                    view.style.display = 'none'; // Force hide
+                }
+            });
+            resetZoom();
+        }
+
+        // --- Zoom / Pan ---
+        function initZoomPan() {
+            const viewport = ui.viewport;
+
+            const handleStart = (clientX, clientY) => {
+                state.panning = true;
+                state.startX = clientX - state.panX;
+                state.startY = clientY - state.panY;
+                viewport.classList.add('cursor-grabbing');
+            };
+
+            const handleMove = (clientX, clientY) => {
+                if (!state.panning) return;
+                state.panX = clientX - state.startX;
+                state.panY = clientY - state.startY;
+                applyTransform();
+            };
+
+            const handleEnd = () => {
+                state.panning = false;
+                viewport.classList.remove('cursor-grabbing');
+            };
+
+            // Mouse
+            viewport.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
+            window.addEventListener('mouseup', handleEnd);
+            window.addEventListener('mousemove', e => { e.preventDefault(); handleMove(e.clientX, e.clientY); });
+            viewport.addEventListener('wheel', e => {
+                e.preventDefault();
+                zoomCanvas(e.deltaY > 0 ? -0.1 : 0.1);
+            }, { passive: false });
+
+            // Touch
+            viewport.addEventListener('touchstart', e => {
+                if (e.touches.length === 1) handleStart(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: false });
+            viewport.addEventListener('touchmove', e => {
+                if (state.panning && e.touches.length === 1) {
+                    e.preventDefault();
+                    handleMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: false });
+            window.addEventListener('touchend', handleEnd);
+        }
+
+        window.zoomCanvas = (delta) => {
+            state.scale = Math.min(Math.max(0.1, state.scale + delta), 5);
+            if (ui.zoomLevel) ui.zoomLevel.innerText = `${Math.round(state.scale * 100)}%`;
+            applyTransform();
+        };
+
+        window.resetZoom = () => {
+            state.scale = 1; state.panX = 0; state.panY = 0;
+            if (ui.zoomLevel) ui.zoomLevel.innerText = "100%";
+            applyTransform();
+        };
+
+        function applyTransform() {
+            ui.transformLayer.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.scale})`;
+        }
+
+    </script>
+</body>
+
+</html>
