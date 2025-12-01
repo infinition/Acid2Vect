@@ -170,16 +170,23 @@
 
             <!-- Upload -->
             <div id="drop-zone"
-                class="border border-dashed border-zinc-600 bg-zinc-900/50 rounded p-6 text-center transition-all cursor-pointer group relative hover:border-lime-500/50 hover:bg-zinc-800/80">
-                <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                class="relative border border-dashed border-zinc-600 bg-zinc-900/50 rounded p-6 text-center transition-all cursor-pointer group hover:border-lime-500/50 hover:bg-zinc-800/80">
+
+                <input type="file" id="file-input"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 pointer-events-auto"
                     accept="image/*" />
+
                 <div class="text-lime-500 text-3xl mb-2 group-hover:scale-110 transition-transform">
                     <i data-lucide="image-plus" class="w-8 h-8 mx-auto"></i>
                 </div>
-                <p class="text-xs text-zinc-400 font-bold tracking-widest uppercase group-hover:text-white">IMAGE SOURCE
+
+                <p class="text-xs text-zinc-400 font-bold tracking-widest uppercase group-hover:text-white">
+                    IMAGE SOURCE
                 </p>
+
                 <img id="mini-preview" class="absolute inset-0 w-full h-full object-cover opacity-30 hidden rounded" />
             </div>
+
 
             <!-- Filters (Pre-process) -->
             <div class="space-y-4">
