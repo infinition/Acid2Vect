@@ -2,1171 +2,1439 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>AcidVect3D - Acid Burn Edition</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acid2Vect - Vectorizer</title>
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+
+
+
+
+
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
 
-        :root {
-            --bg: #09090b;
-            --panel: rgba(24, 24, 27, 0.94);
-            --panel-border: rgba(63, 63, 70, 0.6);
-            --text: #e4e4e7;
-            --muted: #71717a;
-            --lime: #84cc16;
-            --lime-soft: #bef264;
-            --thumb-size: 18px;
-        }
 
-        * {
-            box-sizing: border-box;
-        }
 
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background: var(--bg);
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         body {
             font-family: 'Rajdhani', sans-serif;
-            color: var(--text);
+            background-color: #09090b;
+            /* zinc-950 */
+            color: #e4e4e7;
+            /* zinc-200 */
+            overflow: hidden;
+
+
+
+
+
+
             user-select: none;
-            -webkit-user-select: none;
+
             -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         }
 
-        button,
-        input,
-        label,
-        select {
-            font: inherit;
-        }
-
-        .acid-glow {
-            box-shadow: 0 0 10px rgba(132, 204, 22, 0.3);
-        }
-
-        .acid-border {
-            border-color: rgba(132, 204, 22, 0.5);
-        }
-
-        .acid-text {
-            color: var(--lime-soft);
-            text-shadow: 0 0 5px rgba(132, 204, 22, 0.5);
-        }
-
+        /* --- ACID THEME UTILS --- */
         .glass-panel {
-            background: var(--panel);
+            background: rgba(24, 24, 27, 0.95);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-right: 1px solid var(--panel-border);
-            transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
-            will-change: transform;
+            border-right: 1px solid rgba(63, 63, 70, 0.5);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out;
+
+
         }
 
-        .panel-header-sticky {
-            position: sticky;
-            top: 0;
-            z-index: 2;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+        .interaction-fade {
+            opacity: 0.15;
+            pointer-events: none;
+
+
+
         }
 
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        .tech-bg {
+            background-image: linear-gradient(rgba(39, 39, 42, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(39, 39, 42, 0.3) 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #18181b;
+        /* Checkboard for transparency */
+        .bg-checkboard {
+            background-image:
+                linear-gradient(45deg, #18181b 25%, transparent 25%),
+                linear-gradient(135deg, #18181b 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #18181b 75%),
+                linear-gradient(135deg, transparent 75%, #18181b 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 0, 10px -10px, 0px 10px;
+            background-color: #09090b;
+
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #3f3f46;
-            border-radius: 999px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #52525b;
-        }
-
+        /* Range Slider */
         .range-slider {
             -webkit-appearance: none;
-            appearance: none;
+
             width: 100%;
-            height: 8px;
-            border-radius: 999px;
-            background: linear-gradient(90deg, rgba(132, 204, 22, 0.35), rgba(39, 39, 42, 1));
+            height: 4px;
+            border-radius: 2px;
+            background: #27272a;
             outline: none;
             cursor: pointer;
-            touch-action: pan-y;
-        }
 
-        .range-slider::-webkit-slider-runnable-track {
-            height: 8px;
-            border-radius: 999px;
-            background: #27272a;
+
+
+
+
+
+
         }
 
         .range-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: var(--thumb-size);
-            height: var(--thumb-size);
-            margin-top: calc((8px - var(--thumb-size)) / 2);
-            border-radius: 4px;
-            background: var(--lime);
+            width: 16px;
+            height: 16px;
+            border-radius: 0;
+            background: #84cc16;
+            /* lime-500 */
             border: 2px solid #09090b;
             cursor: pointer;
-            transition: transform 0.12s ease, background-color 0.12s ease;
-            box-shadow: 0 0 10px rgba(132, 204, 22, 0.55);
+            transition: transform 0.1s;
+            box-shadow: 0 0 8px rgba(132, 204, 22, 0.6);
+
+
+
+
+
+
+
+
+
+
         }
 
-        .range-slider::-webkit-slider-thumb:active {
-            transform: scale(1.1);
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #a3e635;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         }
 
-        .range-slider::-moz-range-track {
-            height: 8px;
-            border-radius: 999px;
-            background: #27272a;
-        }
-
-        .range-slider::-moz-range-thumb {
-            width: var(--thumb-size);
-            height: var(--thumb-size);
-            border-radius: 4px;
-            background: var(--lime);
-            border: 2px solid #09090b;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(132, 204, 22, 0.55);
-        }
-
-        .tech-checkbox {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #27272a;
-            border: 1px solid #52525b;
-            border-radius: 3px;
-            cursor: pointer;
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .tech-checkbox:checked {
-            background: var(--lime);
-            border-color: var(--lime);
-        }
-
-        .tech-checkbox:checked::after {
-            content: '✓';
-            color: #09090b;
-            font-size: 12px;
-            font-weight: bold;
-            line-height: 1;
-        }
-
+        /* Loader */
         .loader {
             border: 3px solid #27272a;
-            border-top: 3px solid var(--lime);
+            border-top: 3px solid #84cc16;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             animation: spin 0.8s linear infinite;
-            box-shadow: 0 0 15px rgba(132, 204, 22, 0.2);
+
         }
 
         @keyframes spin {
-            0% {
+            from {
                 transform: rotate(0deg);
             }
 
-            100% {
+            to {
                 transform: rotate(360deg);
             }
         }
 
         #drop-zone.dragover {
-            border-color: var(--lime);
+            border-color: #84cc16;
             background-color: rgba(132, 204, 22, 0.1);
             box-shadow: inset 0 0 20px rgba(132, 204, 22, 0.2);
         }
 
-        .layer-item {
-            transition: background-color 0.2s ease, border-color 0.2s ease;
-            border-left: 2px solid transparent;
+        .hidden-tab {
+            display: none !important;
+
         }
 
-        .layer-item:hover {
-            background-color: rgba(63, 63, 70, 0.4);
-            border-left-color: var(--lime);
+        .cursor-grab {
+            cursor: grab;
+
         }
 
-        .btn-toggle.active {
-            background-color: #365314;
-            color: var(--lime-soft);
-            border-color: #65a30d;
-            box-shadow: inset 0 0 10px rgba(132, 204, 22, 0.2);
+        .cursor-grabbing {
+            cursor: grabbing;
+
+
+
         }
 
-        .tech-bg {
-            background-image:
-                linear-gradient(rgba(39, 39, 42, 0.28) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(39, 39, 42, 0.28) 1px, transparent 1px);
-            background-size: 40px 40px;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+
+
         }
 
-        .bevel-icon.active {
-            color: var(--lime-soft);
-            filter: drop-shadow(0 0 2px rgba(132, 204, 22, 0.5));
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+
         }
 
-        .bevel-icon {
-            color: #52525b;
-        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 2px;
 
-        .control-card {
-            background: rgba(9, 9, 11, 0.34);
-            border: 1px solid rgba(63, 63, 70, 0.45);
-            border-radius: 10px;
-            padding: 14px;
-        }
 
-        .safe-bottom {
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-        }
 
-        .fab-safe {
-            bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
-        }
 
-        #canvas-container,
-        #canvas-container canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            outline: none;
-        }
 
-        @media (max-width: 767px) {
-            .glass-panel {
-                width: min(92vw, 380px);
-                max-width: 92vw;
-                border-right: 1px solid rgba(63, 63, 70, 0.7);
-                box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
-            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         }
     </style>
 </head>
 
-<body class="h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-300">
+<body class="h-screen w-screen flex bg-zinc-950 text-zinc-300 overflow-hidden">
+
+    <!-- Mobile FAB (Menu) -->
     <button id="mobile-menu-btn"
-        class="md:hidden fixed fab-safe right-6 z-50 w-14 h-14 bg-lime-600 text-black rounded-full shadow-[0_0_20px_rgba(132,204,22,0.4)] flex items-center justify-center active:scale-95 transition-transform border-2 border-lime-400">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
-            </path>
-        </svg>
+        class="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-lime-600 text-black rounded-full shadow-[0_0_20px_rgba(132,204,22,0.4)] flex items-center justify-center active:scale-95 transition-transform border-2 border-lime-400">
+        <i data-lucide="sliders-horizontal" class="w-6 h-6"></i>
+
+
+
+
     </button>
 
+    <!-- Sidebar Controls -->
     <aside id="sidebar"
-        class="fixed inset-y-0 left-0 w-80 md:w-96 glass-panel z-40 flex flex-col transform -translate-x-full md:translate-x-0 h-full">
-        <div class="panel-header-sticky p-5 border-b border-zinc-800 flex flex-col gap-4 bg-zinc-900/70">
-            <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-bold tracking-widest text-white flex items-center gap-2">
-                    <span class="w-3 h-3 bg-lime-500 rounded-sm shadow-[0_0_8px_#84cc16]"></span>
-                    ACID<span class="text-lime-400 font-light">VECT3D</span>
-                </h1>
-                <span class="text-[10px] font-mono text-zinc-500 border border-zinc-700 px-1 rounded">v3.1</span>
-            </div>
+        class="fixed inset-y-0 left-0 w-80 lg:w-96 glass-panel z-40 flex flex-col transform -translate-x-full lg:translate-x-0 shadow-2xl h-full">
 
-            <div class="flex items-center justify-between gap-2 bg-black/40 p-2 rounded border border-zinc-800">
-                <div class="flex gap-1">
-                    <button id="btn-flip-h" class="btn-toggle p-2 rounded hover:bg-zinc-800 text-zinc-400 transition"
-                        title="Flip H">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                        </svg>
-                    </button>
-                    <button id="btn-flip-v" class="btn-toggle p-2 rounded hover:bg-zinc-800 text-zinc-400 transition"
-                        title="Flip V">
-                        <svg class="w-4 h-4 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="w-px h-5 bg-zinc-700"></div>
-
-                <div class="flex gap-1 font-mono text-xs font-bold">
-                    <button data-rotate="x" class="rotate-btn px-2 py-1 hover:bg-zinc-800 text-zinc-400 rounded transition">X</button>
-                    <button data-rotate="y" class="rotate-btn px-2 py-1 hover:bg-zinc-800 text-zinc-400 rounded transition">Y</button>
-                    <button data-rotate="z" class="rotate-btn px-2 py-1 hover:bg-zinc-800 text-zinc-400 rounded transition">Z</button>
-                </div>
-
-                <div class="w-px h-5 bg-zinc-700"></div>
-
-                <button id="btn-light-boost"
-                    class="btn-toggle active p-2 rounded hover:bg-zinc-800 text-zinc-400 transition"
-                    title="Light Boost">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
-                        </path>
-                    </svg>
-                </button>
+        <!-- Header -->
+        <div class="p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50">
+            <h1 class="text-2xl font-bold tracking-widest text-white flex items-center gap-2">
+                <span class="w-3 h-3 bg-lime-500 rounded-sm shadow-[0_0_8px_#84cc16]"></span>
+                ACID<span class="text-lime-400 font-light">2VECT</span>
+            </h1>
+            <div class="flex items-center gap-2">
+                <div id="status-indicator" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                <span id="status-text" class="text-[10px] font-mono text-zinc-500">INIT</span>
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-5 space-y-6 safe-bottom">
-            <div id="drop-zone"
-                class="relative control-card border border-dashed border-zinc-600 text-center transition-all cursor-pointer group hover:border-lime-500/50 hover:bg-zinc-800/80">
-                <input type="file" id="file-input" accept=".svg,image/svg+xml"
-                    class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer" />
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
 
-                <div class="text-lime-500 text-3xl mb-2 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_5px_rgba(132,204,22,0.5)]">
-                    <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                    </svg>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            <!-- Upload -->
+            <div id="drop-zone"
+                class="relative border border-dashed border-zinc-600 bg-zinc-900/50 rounded p-6 text-center transition-all cursor-pointer group hover:border-lime-500/50 hover:bg-zinc-800/80">
+
+
+
+
+
+                <input type="file" id="file-input"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 pointer-events-auto"
+                    accept="image/*" />
+
+
+
+
+
+
+
+
+
+
+
+                <div class="text-lime-500 text-3xl mb-2 group-hover:scale-110 transition-transform">
+                    <i data-lucide="image-plus" class="w-8 h-8 mx-auto"></i>
+
+
+
+
+
+
+
+
+
                 </div>
 
                 <p class="text-xs text-zinc-400 font-bold tracking-widest uppercase group-hover:text-white">
-                    Import SVG
+                    IMAGE SOURCE
                 </p>
+
+                <img id="mini-preview" class="absolute inset-0 w-full h-full object-cover opacity-30 hidden rounded" />
             </div>
 
-            <div class="space-y-4 control-card">
-                <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold border-b border-zinc-800 pb-1">
-                    Global Settings
-                </h3>
 
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex justify-between mb-2">
-                            <label class="text-xs text-zinc-400 font-medium" for="param-scale">SCALE</label>
-                            <span id="val-scale" class="text-xs font-mono text-lime-400">1.00</span>
-                        </div>
-                        <input type="range" id="param-scale" min="0.05" max="5" step="0.05" value="1.00"
-                            class="range-slider" />
-                    </div>
 
-                    <div>
-                        <div class="flex justify-between mb-2">
-                            <label class="text-xs text-zinc-400 font-medium" for="param-spacing">Z SPACING</label>
-                            <span id="val-spacing" class="text-xs font-mono text-lime-400">0</span>
-                        </div>
-                        <input type="range" id="param-spacing" min="0" max="100" step="1" value="0"
-                            class="range-slider" />
+
+
+
+            <!-- Filters (Pre-process) -->
+            <div class="space-y-4">
+                <h3
+                    class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold border-b border-zinc-800 pb-1">
+                    Pre-processing</h3>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs text-zinc-400 font-medium">BRIGHTNESS</label>
+                        <span id="val-brightness" class="text-xs font-mono text-lime-400">0%</span>
                     </div>
+                    <input type="range" id="input-brightness" min="-100" max="100" step="5" value="0"
+                        class="range-slider">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs text-zinc-400 font-medium">CONTRAST</label>
+                        <span id="val-contrast" class="text-xs font-mono text-lime-400">0%</span>
+
+
+
+                    </div>
+                    <input type="range" id="input-contrast" min="-100" max="100" step="5" value="0"
+                        class="range-slider">
                 </div>
             </div>
 
-            <div class="space-y-4 control-card">
-                <button id="bevel-toggle-header" type="button"
-                    class="w-full flex items-center justify-between border-b border-zinc-800 pb-1 text-left">
-                    <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold flex items-center gap-1">
-                        Bevel Profile (Optional)
-                    </h3>
-                    <svg id="bevel-chevron" class="w-3 h-3 transition-transform" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
+            <!-- Vector Settings -->
+            <div class="space-y-4">
+                <h3
+                    class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold border-b border-zinc-800 pb-1">
+                    Vectorization</h3>
 
-                <div id="bevel-settings" class="space-y-4 hidden">
-                    <div>
-                        <div class="flex justify-between mb-2">
-                            <label class="text-xs text-zinc-400 font-medium" for="param-bevel">DEPTH / THICKNESS</label>
-                            <span id="val-bevel" class="text-xs font-mono text-lime-400">0</span>
-                        </div>
-                        <input type="range" id="param-bevel" min="0" max="5" step="0.05" value="0"
-                            class="range-slider" />
-                    </div>
 
-                    <div>
-                        <div class="flex justify-between mb-2">
-                            <label class="text-xs text-zinc-400 font-medium" for="param-segments">SMOOTHNESS (SEGMENTS)</label>
-                            <span id="val-segments" class="text-xs font-mono text-lime-400">1</span>
-                        </div>
-                        <input type="range" id="param-segments" min="1" max="10" step="1" value="1"
-                            class="range-slider" />
-                        <div class="flex justify-between text-[8px] text-zinc-600 mt-1 font-mono">
-                            <span>Chamfer</span>
-                            <span>Rounded</span>
-                        </div>
-                    </div>
 
-                    <div class="flex items-center justify-between pt-2 border-t border-zinc-800/50">
-                        <div class="flex flex-col">
-                            <span class="text-xs text-zinc-300 font-medium">BOTTOM BEVEL</span>
-                            <span class="text-[8px] text-zinc-500">Enable for double-sided</span>
-                        </div>
-                        <input type="checkbox" id="param-bottom-bevel" class="tech-checkbox" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs text-zinc-400 font-medium">COLORS</label>
+                        <span id="val-colors" class="text-xs font-mono text-lime-400">16</span>
+
+
+
+
+
+
+
                     </div>
+                    <input type="range" id="input-colors" min="2" max="64" step="1" value="16" class="range-slider">
                 </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs text-zinc-400 font-medium">SMOOTH (BLUR)</label>
+                        <span id="val-blur" class="text-xs font-mono text-lime-400">0 px</span>
+
+
+                    </div>
+                    <input type="range" id="input-blur" min="0" max="10" step="0.5" value="0" class="range-slider">
+                </div>
+
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-xs text-zinc-400 font-medium">NOISE REDUCTION</label>
+                        <span id="val-omit" class="text-xs font-mono text-lime-400">8 px</span>
+                    </div>
+                    <input type="range" id="input-omit" min="0" max="100" step="1" value="8" class="range-slider">
+                </div>
+
+                <!-- Advanced fold -->
+                <details class="group">
+                    <summary
+                        class="text-[10px] uppercase tracking-wider text-zinc-500 cursor-pointer list-none flex items-center gap-2 mb-2">
+                        <i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i>
+                        Advanced
+                    </summary>
+                    <div class="pl-2 space-y-4 border-l border-zinc-800 mt-2">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-[10px] text-zinc-400">Curve Smoothing</label>
+                                <span id="val-qtres" class="text-[10px] font-mono text-lime-500">1.0</span>
+                            </div>
+                            <input type="range" id="input-qtres" min="0.1" max="5" step="0.1" value="1.0"
+                                class="range-slider">
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-[10px] text-zinc-400">Line Smoothing</label>
+                                <span id="val-ltres" class="text-[10px] font-mono text-lime-500">1.0</span>
+                            </div>
+                            <input type="range" id="input-ltres" min="0.1" max="5" step="0.1" value="1.0"
+                                class="range-slider">
+                        </div>
+                    </div>
+                </details>
             </div>
 
-            <div class="space-y-3 control-card">
-                <div class="flex justify-between items-center border-b border-zinc-800 pb-1">
-                    <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold">Layers</h3>
-                    <span id="layer-count"
-                        class="text-[9px] font-mono bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">0</span>
-                </div>
-
-                <div id="layers-container" class="space-y-2 min-h-[100px]">
-                    <div class="text-xs text-zinc-600 italic text-center py-8 border border-zinc-800/50 rounded bg-zinc-900/30">
-                        Waiting for file...
-                    </div>
-                </div>
-            </div>
-
-            <div class="h-8 md:hidden"></div>
+            <!-- Spacer Mobile -->
+            <div class="h-10 lg:hidden"></div>
         </div>
 
-        <div class="p-5 border-t border-zinc-800 bg-zinc-950 safe-bottom">
-            <div class="flex items-center justify-between mb-4 text-[10px] text-zinc-500 font-mono gap-3 flex-wrap">
-                <div class="flex gap-3">
-                    <span>VERTS: <span id="stat-verts" class="text-zinc-300">0</span></span>
-                    <span>TRIS: <span id="stat-tris" class="text-zinc-300">0</span></span>
-                </div>
-                <label class="flex items-center cursor-pointer hover:text-white transition gap-2">
-                    <input type="checkbox" id="param-wireframe" class="tech-checkbox" />
-                    <span class="text-[10px]">WIRE</span>
-                </label>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button id="btn-export-combined" disabled
-                    class="group disabled:opacity-50 disabled:cursor-not-allowed w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-bold rounded-sm border border-zinc-700 transition flex flex-col items-center justify-center gap-1">
-                    <span class="text-xs tracking-wider">MERGED STL</span>
-                    <span class="text-[8px] text-zinc-500 group-hover:text-zinc-400 font-mono uppercase">Single File</span>
-                </button>
-
-                <button id="btn-export-separate" disabled
-                    class="group disabled:opacity-50 disabled:cursor-not-allowed w-full py-3 bg-lime-900/30 hover:bg-lime-900/50 text-lime-400 hover:text-lime-300 font-bold rounded-sm border border-lime-900/50 hover:border-lime-500/50 transition flex flex-col items-center justify-center gap-1 shadow-[0_0_10px_rgba(132,204,22,0.1)]">
-                    <span class="text-xs tracking-wider">SPLIT STL</span>
-                    <span class="text-[8px] text-lime-700 group-hover:text-lime-500 font-mono uppercase">Multi Files</span>
-                </button>
-            </div>
+        <!-- Footer Actions -->
+        <div class="p-5 border-t border-zinc-800 bg-zinc-950">
+            <button id="btn-process" disabled
+                class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-300 hover:text-white font-bold rounded-sm border border-zinc-700 transition flex items-center justify-center gap-2 group">
+                <i data-lucide="zap" class="w-4 h-4 group-hover:text-lime-400"></i>
+                <span id="btn-text">WAITING</span>
+            </button>
         </div>
     </aside>
 
+    <!-- Overlay Close Area (Mobile) -->
     <div id="mobile-overlay"
-        class="md:hidden fixed inset-0 z-30 bg-black/35 opacity-0 pointer-events-none transition-opacity duration-200"></div>
+        class="lg:hidden fixed inset-0 z-30 opacity-0 pointer-events-none transition-opacity duration-300"></div>
 
-    <main class="fixed inset-0 z-0 bg-zinc-950 tech-bg">
-        <div id="canvas-container" class="w-full h-full outline-none"></div>
+    <!-- Main Workspace -->
+    <main class="flex-1 flex flex-col relative tech-bg h-full lg:ml-96 transition-all duration-300">
 
-        <div id="loading-overlay"
-            class="absolute inset-0 bg-zinc-950/80 flex flex-col items-center justify-center z-50 hidden backdrop-blur-sm">
-            <div class="loader mb-4"></div>
-            <p class="text-lime-500 font-bold tracking-[0.3em] text-xs animate-pulse">PROCESSING...</p>
-        </div>
+        <!-- Floating Tabs & Tools -->
+        <div
+            class="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2 w-[90%] max-w-md">
 
-        <div id="empty-state" class="absolute inset-0 flex items-center justify-center pointer-events-none px-6">
-            <div class="text-center opacity-20">
-                <h2 class="text-5xl md:text-8xl font-bold text-zinc-500 mb-2 tracking-tighter">VIEWER</h2>
-                <p class="text-zinc-400 font-mono text-sm md:text-base">DRAG OR IMPORT A VECTOR FILE</p>
+            <!-- Tab Switcher -->
+            <div class="flex bg-zinc-900/90 backdrop-blur border border-zinc-700 rounded-full p-1 shadow-xl">
+                <button onclick="switchTab('original')" id="tab-original"
+                    class="px-4 py-1.5 text-xs font-bold rounded-full transition-colors text-zinc-400 hover:text-white">SOURCE</button>
+                <button onclick="switchTab('split')" id="tab-split"
+                    class="px-4 py-1.5 text-xs font-bold rounded-full transition-colors bg-lime-600 text-black shadow-[0_0_10px_rgba(132,204,22,0.4)]">COMPARE</button>
+                <button onclick="switchTab('vector')" id="tab-vector"
+                    class="px-4 py-1.5 text-xs font-bold rounded-full transition-colors text-zinc-400 hover:text-white">RESULT</button>
+            </div>
+
+            <!-- Zoom Tools (Desktop mostly, but handy on tablets) -->
+            <div class="hidden sm:flex items-center gap-1 bg-zinc-900/80 border border-zinc-800 rounded p-1">
+                <button onclick="zoomCanvas(-0.2)" class="p-1 hover:text-lime-400"><i data-lucide="minus"
+                        class="w-3 h-3"></i></button>
+                <span id="zoom-level" class="text-[10px] font-mono w-8 text-center">100%</span>
+                <button onclick="zoomCanvas(0.2)" class="p-1 hover:text-lime-400"><i data-lucide="plus"
+                        class="w-3 h-3"></i></button>
+                <button onclick="resetZoom()" class="p-1 border-l border-zinc-700 ml-1 hover:text-white"><i
+                        data-lucide="maximize" class="w-3 h-3"></i></button>
+
+
+
             </div>
         </div>
+
+
+        <!-- Download Buttons (Bottom Right) -->
+        <div class="absolute bottom-6 left-6 z-20 flex gap-2">
+            <button id="btn-download-svg" disabled onclick="downloadSVG()"
+                class="flex items-center gap-2 px-3 py-2 bg-zinc-900 text-zinc-400 border border-zinc-700 hover:border-lime-500 hover:text-lime-400 rounded shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                <i data-lucide="download" class="w-4 h-4"></i> <span class="text-xs font-bold">SVG</span>
+            </button>
+            <button id="btn-download-png" disabled onclick="downloadPNG()"
+                class="flex items-center gap-2 px-3 py-2 bg-zinc-900 text-zinc-400 border border-zinc-700 hover:border-blue-500 hover:text-blue-400 rounded shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                <i data-lucide="image" class="w-4 h-4"></i> <span class="text-xs font-bold">PNG</span>
+            </button>
+        </div>
+
+        <!-- Viewport -->
+        <div id="viewport"
+            class="flex-1 overflow-hidden relative cursor-grab active:cursor-grabbing touch-none flex items-center justify-center">
+
+            <!-- Empty State -->
+            <div id="view-empty" class="text-center opacity-20 pointer-events-none">
+                <i data-lucide="layers" class="w-24 h-24 mx-auto mb-4 text-zinc-500"></i>
+                <h2 class="text-4xl font-bold text-zinc-600 tracking-tighter">ACID2VECT</h2>
+            </div>
+
+            <!-- Transform Container -->
+            <div id="transform-layer" class="origin-center transition-transform duration-75 ease-out hidden">
+
+                <!-- View: Original -->
+                <div id="view-original" class="hidden-tab shadow-2xl border border-zinc-800">
+                    <canvas id="canvas-preview"
+                        class="max-w-[90vw] max-h-[80vh] object-contain pointer-events-none block"></canvas>
+                </div>
+
+                <!-- View: Vector -->
+                <div id="view-vector" class="hidden-tab shadow-2xl border border-zinc-800 bg-checkboard">
+                    <div id="svg-full" class="w-[90vw] h-[80vh] flex items-center justify-center pointer-events-none">
+                    </div>
+                </div>
+
+                <!-- View: Split (Comparison) -->
+                <!-- Mobile: flex-col (Vertical), Desktop: flex-row (Horizontal) -->
+                <div id="view-split"
+                    class="relative shadow-2xl border border-zinc-800 bg-zinc-950 flex flex-col lg:flex-row w-[90vw] h-[80vh] lg:w-auto lg:h-auto lg:max-w-[95vw] lg:max-h-[85vh]">
+
+                    <!-- Raster Part -->
+                    <div
+                        class="relative overflow-hidden border-b lg:border-b-0 lg:border-r border-zinc-700 group flex-1 w-full h-1/2 lg:w-1/2 lg:h-full">
+                        <span
+                            class="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 rounded text-zinc-400 z-10 font-bold border border-zinc-700 bg-zinc-900">RASTER</span>
+                        <canvas id="canvas-split" class="block object-contain w-full h-full"></canvas>
+                    </div>
+
+                    <!-- Vector Part -->
+                    <div class="relative overflow-hidden bg-checkboard group flex-1 w-full h-1/2 lg:w-1/2 lg:h-full">
+                        <span
+                            class="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded text-lime-400 z-10 font-bold border border-zinc-700 bg-zinc-900">VECTOR</span>
+                        <div id="svg-split" class="flex items-center justify-center w-full h-full"></div>
+                    </div>
+                </div>
+
+
+
+
+
+            </div>
+        </div>
+
     </main>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
-        import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+    <!-- App Logic -->
+    <script>
+        // --- CDN Configuration ---
+        const SCRIPT_SOURCES = [
+            "https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js",
+            "https://unpkg.com/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"
+        ];
 
+        // --- State ---
+        const state = {
+            rawImgSrc: null,
+            filteredImgData: null,
+            svgStr: null,
+            processing: false,
+            engineReady: false,
+            scale: 1,
+            panning: false,
+            panX: 0,
+            panY: 0,
+            startX: 0,
+            startY: 0,
+            scriptIndex: 0,
+            isMenuOpen: false
+        };
+
+        // --- UI Refs ---
         const ui = {
-            body: document.body,
+
             sidebar: document.getElementById('sidebar'),
             mobileOverlay: document.getElementById('mobile-overlay'),
             mobileMenuBtn: document.getElementById('mobile-menu-btn'),
-            container: document.getElementById('canvas-container'),
+
             fileInput: document.getElementById('file-input'),
             dropZone: document.getElementById('drop-zone'),
-            loading: document.getElementById('loading-overlay'),
-            emptyState: document.getElementById('empty-state'),
-            btnExportCombined: document.getElementById('btn-export-combined'),
-            btnExportSeparate: document.getElementById('btn-export-separate'),
-            layersList: document.getElementById('layers-container'),
-            layerCount: document.getElementById('layer-count'),
-            statVerts: document.getElementById('stat-verts'),
-            statTris: document.getElementById('stat-tris'),
-            btnFlipH: document.getElementById('btn-flip-h'),
-            btnFlipV: document.getElementById('btn-flip-v'),
-            btnLightBoost: document.getElementById('btn-light-boost'),
-            bevelHeader: document.getElementById('bevel-toggle-header'),
-            bevelChevron: document.getElementById('bevel-chevron'),
-            bevelSettings: document.getElementById('bevel-settings'),
-            rotateButtons: [...document.querySelectorAll('.rotate-btn')],
+            miniPreview: document.getElementById('mini-preview'),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             inputs: {
-                bevel: document.getElementById('param-bevel'),
-                segments: document.getElementById('param-segments'),
-                bottomBevel: document.getElementById('param-bottom-bevel'),
-                scale: document.getElementById('param-scale'),
-                spacing: document.getElementById('param-spacing'),
-                wireframe: document.getElementById('param-wireframe')
+                colors: document.getElementById('input-colors'),
+                blur: document.getElementById('input-blur'),
+                omit: document.getElementById('input-omit'),
+                ltres: document.getElementById('input-ltres'),
+                qtres: document.getElementById('input-qtres'),
+                brightness: document.getElementById('input-brightness'),
+                contrast: document.getElementById('input-contrast'),
             },
-            labels: {
-                bevel: document.getElementById('val-bevel'),
-                segments: document.getElementById('val-segments'),
-                scale: document.getElementById('val-scale'),
-                spacing: document.getElementById('val-spacing')
+            displays: {
+                colors: document.getElementById('val-colors'),
+                blur: document.getElementById('val-blur'),
+                omit: document.getElementById('val-omit'),
+                ltres: document.getElementById('val-ltres'),
+                qtres: document.getElementById('val-qtres'),
+                brightness: document.getElementById('val-brightness'),
+                contrast: document.getElementById('val-contrast'),
+            },
+
+
+
+
+
+
+
+
+            btnProcess: document.getElementById('btn-process'),
+            btnText: document.getElementById('btn-text'),
+            btnDownloadSvg: document.getElementById('btn-download-svg'),
+            btnDownloadPng: document.getElementById('btn-download-png'),
+
+            statusIndicator: document.getElementById('status-indicator'),
+            statusText: document.getElementById('status-text'),
+
+            viewport: document.getElementById('viewport'),
+            transformLayer: document.getElementById('transform-layer'),
+            zoomLevel: document.getElementById('zoom-level'),
+
+
+
+
+
+
+
+
+            views: {
+                empty: document.getElementById('view-empty'),
+                original: document.getElementById('view-original'),
+                vector: document.getElementById('view-vector'),
+                split: document.getElementById('view-split'),
+            },
+
+            content: {
+                canvasPreview: document.getElementById('canvas-preview'),
+                canvasSplit: document.getElementById('canvas-split'),
+                svgFull: document.getElementById('svg-full'),
+                svgSplit: document.getElementById('svg-split'),
             }
         };
 
-        const state = {
-            scale: 1,
-            bevelThickness: 0,
-            bevelSegments: 1,
-            bottomBevel: false,
-            spacing: 0,
-            wireframe: false,
-            svgData: null,
-            flipH: false,
-            flipV: false,
-            layers: {},
-            modelGroup: new THREE.Group(),
-            isMobileMenuOpen: false,
-            highLightMode: true,
-            currentObjectRotation: new THREE.Euler(-Math.PI / 2, 0, 0),
-            isRendering: false,
-            renderQueued: false
-        };
-
-        const isMobile = () => window.innerWidth < 768;
-
-        function formatNumber(value, decimals = 2) {
-            return Number(value).toFixed(decimals).replace(/\.00$/, '.0').replace(/(\.\d*[1-9])0$/, '$1');
-        }
-
-        function showLoading(show) {
-            ui.loading.classList.toggle('hidden', !show);
-        }
-
-        function setBevelOpen(open) {
-            ui.bevelSettings.classList.toggle('hidden', !open);
-            ui.bevelChevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
-        }
-        setBevelOpen(false);
-
-        function setMobileMenu(open) {
-            state.isMobileMenuOpen = open;
-            ui.sidebar.classList.toggle('-translate-x-full', !open && isMobile());
-            ui.mobileOverlay.classList.toggle('opacity-0', !open);
-            ui.mobileOverlay.classList.toggle('pointer-events-none', !open);
-            ui.body.classList.toggle('overflow-hidden', open && isMobile());
-        }
-
-        function toggleMobileMenu(forceState) {
-            const next = typeof forceState === 'boolean' ? forceState : !state.isMobileMenuOpen;
-            setMobileMenu(next);
-        }
-
-        ui.mobileMenuBtn.addEventListener('click', () => toggleMobileMenu());
-        ui.mobileOverlay.addEventListener('click', () => toggleMobileMenu(false));
-        ui.bevelHeader.addEventListener('click', () => {
-            const isHidden = ui.bevelSettings.classList.contains('hidden');
-            setBevelOpen(isHidden);
+        // --- Initialization ---
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+            loadVectorEngine();
+            initZoomPan();
+            setupInputs();
+            setupInteractionFade();
         });
 
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x09090b);
-        scene.fog = new THREE.FogExp2(0x09090b, 0.002);
+        // --- Interaction Fade (Transparency on Slide) ---
+        function setupInteractionFade() {
+            const sliders = document.querySelectorAll('input[type="range"]');
+            const startFade = () => ui.sidebar.classList.add('interaction-fade');
+            const endFade = () => ui.sidebar.classList.remove('interaction-fade');
 
-        const gridHelper = new THREE.GridHelper(200, 40, 0x3f3f46, 0x18181b);
-        scene.add(gridHelper);
 
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 3000);
-        camera.position.set(0, 120, 140);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
-        ui.container.appendChild(renderer.domElement);
 
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.06;
-        controls.enablePan = true;
-        controls.maxPolarAngle = Math.PI / 2 - 0.04;
-        controls.minDistance = 15;
-        controls.maxDistance = 1000;
-        controls.touches = {
-            ONE: THREE.TOUCH.ROTATE,
-            TWO: THREE.TOUCH.DOLLY_PAN
-        };
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-        scene.add(ambientLight);
 
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x111111, 1.0);
-        hemiLight.position.set(0, 200, 0);
-        scene.add(hemiLight);
 
-        const underGlow = new THREE.PointLight(0x84cc16, 0.8, 100);
-        underGlow.position.set(0, -40, 0);
-        scene.add(underGlow);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
-        dirLight.position.set(50, 200, 100);
-        dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 1024;
-        dirLight.shadow.mapSize.height = 1024;
-        dirLight.shadow.camera.near = 0.5;
-        dirLight.shadow.camera.far = 1000;
-        scene.add(dirLight);
 
-        const fillLight = new THREE.DirectionalLight(0xa1a1aa, 0.4);
-        fillLight.position.set(-50, 50, -50);
-        scene.add(fillLight);
+            sliders.forEach(slider => {
+                slider.addEventListener('pointerdown', startFade);
+                window.addEventListener('pointerup', endFade);
+                window.addEventListener('pointercancel', endFade);
+            });
+        }
 
-        scene.add(state.modelGroup);
+        // --- Mobile Menu ---
+        function toggleMenu(force) {
+            const isOpen = force !== undefined ? force : !state.isMenuOpen;
+            state.isMenuOpen = isOpen;
 
-        function updateLighting() {
-            if (state.highLightMode) {
-                ambientLight.intensity = 1.35;
-                dirLight.intensity = 3.2;
-                fillLight.intensity = 1.6;
 
-                if (!scene.getObjectByName('extraFill')) {
-                    const extraFill = new THREE.DirectionalLight(0xffffff, 1.2);
-                    extraFill.name = 'extraFill';
-                    extraFill.position.set(0, 50, 100);
-                    scene.add(extraFill);
-                }
+
+            if (isOpen) {
+                ui.sidebar.classList.remove('-translate-x-full');
+                ui.mobileOverlay.classList.remove('opacity-0', 'pointer-events-none');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             } else {
-                ambientLight.intensity = 0.2;
-                dirLight.intensity = 2.0;
-                fillLight.intensity = 0.4;
-                const extra = scene.getObjectByName('extraFill');
-                if (extra) scene.remove(extra);
+                ui.sidebar.classList.add('-translate-x-full');
+                ui.mobileOverlay.classList.add('opacity-0', 'pointer-events-none');
+
+
+
             }
         }
-        updateLighting();
+        ui.mobileMenuBtn.addEventListener('click', () => toggleMenu());
+        ui.mobileOverlay.addEventListener('click', () => toggleMenu(false));
 
-        ui.btnLightBoost.addEventListener('click', () => {
-            state.highLightMode = !state.highLightMode;
-            ui.btnLightBoost.classList.toggle('active', state.highLightMode);
-            updateLighting();
-        });
-
-        function cleanupModelGroup() {
-            while (state.modelGroup.children.length > 0) {
-                const child = state.modelGroup.children[0];
-                if (child.geometry) child.geometry.dispose();
-                if (Array.isArray(child.material)) {
-                    child.material.forEach((mat) => mat.dispose && mat.dispose());
-                } else if (child.material) {
-                    child.material.dispose();
-                }
-                state.modelGroup.remove(child);
-            }
-        }
-
-        function createMaterial(color) {
-            return new THREE.MeshStandardMaterial({
-                color: new THREE.Color(color),
-                roughness: 0.24,
-                metalness: 0.22,
-                wireframe: state.wireframe,
-                side: THREE.DoubleSide
-            });
-        }
-
-        function renderLayersUI() {
-            ui.layersList.innerHTML = '';
-            const colors = Object.keys(state.layers);
-            ui.layerCount.innerText = String(colors.length);
-
-            if (colors.length === 0) {
-                ui.layersList.innerHTML = '<div class="text-xs text-zinc-600 italic text-center py-8">No layers</div>';
+        // --- Engine Loading ---
+        function loadVectorEngine() {
+            if (typeof window.ImageTracer !== 'undefined') {
+                setEngineStatus('ready');
                 return;
             }
+            setEngineStatus('loading');
 
-            colors.forEach((colorKey) => {
-                const layer = state.layers[colorKey];
-                const item = document.createElement('div');
-                item.className = 'layer-item flex items-center gap-3 p-2 rounded bg-zinc-900 border border-zinc-800';
-
-                const swatchWrapper = document.createElement('div');
-                swatchWrapper.className = 'flex flex-col items-center gap-1 min-w-[24px]';
-
-                const swatch = document.createElement('button');
-                swatch.type = 'button';
-                swatch.className = 'w-5 h-5 rounded-sm border border-zinc-600 cursor-pointer shadow-sm';
-                swatch.style.backgroundColor = colorKey;
-                swatch.style.opacity = layer.visible ? '1' : '0.3';
-                swatch.style.boxShadow = layer.visible ? `0 0 8px ${colorKey}` : 'none';
-                swatch.title = 'Toggle layer visibility';
-                swatch.addEventListener('click', () => {
-                    layer.visible = !layer.visible;
-                    swatch.style.opacity = layer.visible ? '1' : '0.3';
-                    swatch.style.boxShadow = layer.visible ? `0 0 8px ${colorKey}` : 'none';
-                    queueGeometryUpdate();
-                });
-
-                const hexLabel = document.createElement('span');
-                hexLabel.className = 'text-[8px] font-mono text-zinc-500 uppercase';
-                hexLabel.innerText = colorKey.substring(0, 7);
-                swatchWrapper.appendChild(swatch);
-                swatchWrapper.appendChild(hexLabel);
-
-                const controlsWrapper = document.createElement('div');
-                controlsWrapper.className = 'flex-1';
-
-                const header = document.createElement('div');
-                header.className = 'flex justify-between mb-1 items-center gap-2';
-
-                const labelGroup = document.createElement('div');
-                labelGroup.innerHTML = '<span class="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mr-2">DEPTH</span>';
-
-                const spacer = document.createElement('div');
-                spacer.className = 'flex-1';
-
-                const bevelToggle = document.createElement('button');
-                bevelToggle.type = 'button';
-                bevelToggle.className = `cursor-pointer transition ${layer.bevelEnabled ? 'bevel-icon active' : 'bevel-icon'}`;
-                bevelToggle.title = 'Toggle bevel for this layer';
-                bevelToggle.innerHTML = '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l10 10-10 10L2 12 12 2z"></path></svg>';
-                bevelToggle.addEventListener('click', () => {
-                    layer.bevelEnabled = !layer.bevelEnabled;
-                    bevelToggle.className = `cursor-pointer transition ${layer.bevelEnabled ? 'bevel-icon active' : 'bevel-icon'}`;
-                    queueGeometryUpdate();
-                });
-
-                const valDisplay = document.createElement('span');
-                valDisplay.className = 'text-[9px] font-mono text-lime-500 depth-val';
-                valDisplay.innerHTML = layer.depth === 0 ? '<span class="text-zinc-600">OFF</span>' : String(layer.depth);
-
-                const slider = document.createElement('input');
-                slider.type = 'range';
-                slider.min = '0';
-                slider.max = '100';
-                slider.step = '1';
-                slider.value = String(layer.depth);
-                slider.className = 'range-slider';
-                slider.style.height = '8px';
-                slider.addEventListener('input', (e) => {
-                    const val = parseInt(e.target.value, 10) || 0;
-                    layer.depth = val;
-                    valDisplay.innerHTML = val === 0 ? '<span class="text-zinc-600">OFF</span>' : String(val);
-                    queueGeometryUpdate();
-                });
-
-                header.appendChild(labelGroup);
-                header.appendChild(spacer);
-                header.appendChild(bevelToggle);
-                header.appendChild(valDisplay);
-                controlsWrapper.appendChild(header);
-                controlsWrapper.appendChild(slider);
-
-                item.appendChild(swatchWrapper);
-                item.appendChild(controlsWrapper);
-                ui.layersList.appendChild(item);
-            });
-        }
-
-        function updateStats(totalVerts, totalTris) {
-            ui.statVerts.textContent = String(totalVerts);
-            ui.statTris.textContent = String(Math.floor(totalTris));
-        }
-
-        function setExportButtonsEnabled(enabled) {
-            ui.btnExportCombined.disabled = !enabled;
-            ui.btnExportSeparate.disabled = !enabled;
-        }
-
-        function rebuildGeometry() {
-            if (!state.svgData) {
-                cleanupModelGroup();
-                updateStats(0, 0);
-                setExportButtonsEnabled(false);
-                return;
-            }
-
-            showLoading(true);
-            cleanupModelGroup();
-
-            let totalVerts = 0;
-            let totalTris = 0;
-            let visibleIndex = 0;
-
-            for (const colorKey of Object.keys(state.layers)) {
-                const layer = state.layers[colorKey];
-                if (!layer.visible || layer.depth <= 0 || !layer.shapes.length) continue;
-
-                const applyBevel = Number(state.bevelThickness) > 0 && !!layer.bevelEnabled;
-                const extrudeSettings = {
-                    steps: 1,
-                    depth: Number(layer.depth),
-                    bevelEnabled: applyBevel,
-                    bevelThickness: applyBevel ? Number(state.bevelThickness) : 0,
-                    bevelSize: applyBevel ? Number(state.bevelThickness) * 0.5 : 0,
-                    bevelOffset: 0,
-                    bevelSegments: Math.max(1, Number(state.bevelSegments) || 1)
-                };
-
-                const geometry = new THREE.ExtrudeGeometry(layer.shapes, extrudeSettings);
-
-                if (applyBevel && !state.bottomBevel) {
-                    const pos = geometry.attributes.position;
-                    for (let i = 0; i < pos.count; i++) {
-                        if (pos.getZ(i) < 0) pos.setZ(i, 0);
-                    }
-                    pos.needsUpdate = true;
-                    geometry.computeVertexNormals();
+            const script = document.createElement('script');
+            script.src = SCRIPT_SOURCES[state.scriptIndex];
+            script.async = true;
+            script.onload = () => setEngineStatus('ready');
+            script.onerror = () => {
+                if (state.scriptIndex < SCRIPT_SOURCES.length - 1) {
+                    state.scriptIndex++;
+                    loadVectorEngine();
+                } else {
+                    setEngineStatus('error');
                 }
+            };
+            document.body.appendChild(script);
+        }
 
-                const scaleX = Number(state.scale) * (state.flipH ? -1 : 1);
-                const scaleY = -Number(state.scale) * (state.flipV ? -1 : 1);
-                geometry.scale(scaleX, scaleY, Number(state.scale));
-                geometry.computeBoundingBox();
-                geometry.computeBoundingSphere();
-
-                const mesh = new THREE.Mesh(geometry, createMaterial(layer.color));
-                mesh.name = layer.color;
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                mesh.position.z = visibleIndex * Number(state.spacing);
-                state.modelGroup.add(mesh);
-                visibleIndex += 1;
-
-                totalVerts += geometry.attributes.position.count;
-                totalTris += (geometry.index ? geometry.index.count : geometry.attributes.position.count) / 3;
-            }
-
-            if (state.modelGroup.children.length > 0) {
-                const box = new THREE.Box3().setFromObject(state.modelGroup);
-                const center = new THREE.Vector3();
-                const size = new THREE.Vector3();
-                box.getCenter(center);
-                box.getSize(size);
-
-                state.modelGroup.children.forEach((mesh) => {
-                    mesh.position.sub(center);
-                });
-
-                state.modelGroup.rotation.copy(state.currentObjectRotation);
-                state.modelGroup.position.set(0, Math.max(size.z * 0.5, 0), 0);
-
-                controls.target.set(0, Math.max(size.z * 0.28, 0), 0);
-                controls.update();
+        function setEngineStatus(status) {
+            ui.statusIndicator.className = 'w-2 h-2 rounded-full';
+            if (status === 'loading') {
+                ui.statusIndicator.classList.add('bg-yellow-500', 'animate-pulse');
+                ui.statusText.innerText = 'LOADING...';
+            } else if (status === 'ready') {
+                state.engineReady = true;
+                ui.statusIndicator.classList.add('bg-lime-500', 'shadow-[0_0_5px_#84cc16]');
+                ui.statusText.innerText = 'READY';
+                ui.statusText.classList.add('text-lime-500');
+                if (state.rawImgSrc && !state.processing) updateProcessBtn(true);
             } else {
-                state.modelGroup.position.set(0, 0, 0);
-                state.modelGroup.rotation.copy(state.currentObjectRotation);
-            }
-
-            updateStats(totalVerts, totalTris);
-            const hasModel = state.modelGroup.children.length > 0;
-            setExportButtonsEnabled(hasModel);
-            ui.emptyState.classList.toggle('hidden', hasModel);
-            showLoading(false);
-        }
-
-        function queueGeometryUpdate() {
-            if (state.isRendering) {
-                state.renderQueued = true;
-                return;
-            }
-            state.isRendering = true;
-            requestAnimationFrame(() => {
-                try {
-                    rebuildGeometry();
-                } finally {
-                    state.isRendering = false;
-                    if (state.renderQueued) {
-                        state.renderQueued = false;
-                        queueGeometryUpdate();
-                    }
-                }
-            });
-        }
-
-        function fitCameraToModel() {
-            if (!state.modelGroup.children.length) return;
-            const box = new THREE.Box3().setFromObject(state.modelGroup);
-            const size = new THREE.Vector3();
-            const center = new THREE.Vector3();
-            box.getSize(size);
-            box.getCenter(center);
-
-            const maxDim = Math.max(size.x, size.y, size.z, 1);
-            const fov = THREE.MathUtils.degToRad(camera.fov);
-            let cameraZ = Math.abs((maxDim / 2) / Math.tan(fov / 2));
-            cameraZ *= 1.5;
-
-            camera.position.set(center.x, center.y + maxDim * 0.8, center.z + cameraZ);
-            controls.target.copy(center);
-            controls.update();
-        }
-
-        function normalizeColor(fillColor) {
-            try {
-                const tempColor = new THREE.Color().setStyle(fillColor);
-                return `#${tempColor.getHexString()}`;
-            } catch {
-                return '#000000';
+                ui.statusIndicator.classList.add('bg-red-500');
+                ui.statusText.innerText = 'ERROR';
             }
         }
 
-        function loadSVG(content) {
-            const loader = new SVGLoader();
-            try {
-                const data = loader.parse(content);
-                state.svgData = data;
-                state.layers = {};
-                state.currentObjectRotation.set(-Math.PI / 2, 0, 0);
+        // --- Real-time Processing (Debounce) ---
+        let debounceTimer;
+        function debouncedVectorization() {
+            // Immediately show loading state to give feedback
+            updateProcessBtn(false, true);
 
-                let minX = Infinity;
-                let maxX = -Infinity;
-                let minY = Infinity;
-                let maxY = -Infinity;
-                let hasShapes = false;
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                applyFiltersAndProcess();
+            }, 500); // 500ms delay
+        }
 
-                data.paths.forEach((path) => {
-                    const fillColor = path.userData?.style?.fill;
-                    if (fillColor === undefined || fillColor === 'none') return;
+        // --- Inputs ---
+        function setupInputs() {
+            const updateDisplay = (key, val) => {
+                let suffix = '';
+                if (key === 'blur' || key === 'omit') suffix = ' px';
+                if (key === 'brightness' || key === 'contrast') suffix = '%';
+                if (ui.displays[key]) ui.displays[key].innerText = val + suffix;
+            };
 
-                    const colorKey = normalizeColor(fillColor);
-                    if (!state.layers[colorKey]) {
-                        state.layers[colorKey] = {
-                            color: colorKey,
-                            visible: true,
-                            bevelEnabled: true,
-                            depth: 10,
-                            shapes: []
-                        };
+            Object.keys(ui.inputs).forEach(key => {
+                ui.inputs[key].addEventListener('input', (e) => {
+                    updateDisplay(key, e.target.value);
+
+                    // Trigger real-time updates based on input type
+                    if (['brightness', 'contrast'].includes(key)) {
+                        if (state.rawImgSrc) applyFiltersToCanvas();
+                        debouncedVectorization(); // Also re-vectorize after filter change
+                    } else {
+                        // Vector params
+                        if (state.rawImgSrc) debouncedVectorization();
                     }
 
-                    const shapes = SVGLoader.createShapes(path);
-                    shapes.forEach((shape) => {
-                        hasShapes = true;
-                        const points = shape.getPoints();
-                        for (const pt of points) {
-                            if (pt.x < minX) minX = pt.x;
-                            if (pt.x > maxX) maxX = pt.x;
-                            if (pt.y < minY) minY = pt.y;
-                            if (pt.y > maxY) maxY = pt.y;
-                        }
-                    });
 
-                    state.layers[colorKey].shapes.push(...shapes);
+
+
+
+
+
+
+
+
+
+
+
                 });
+            });
 
-                if (!hasShapes) {
-                    throw new Error('No filled SVG shapes found. Use filled paths rather than strokes only.');
-                }
+            ui.fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+            ui.dropZone.addEventListener('dragover', e => { e.preventDefault(); ui.dropZone.classList.add('dragover'); });
+            ui.dropZone.addEventListener('dragleave', e => { e.preventDefault(); ui.dropZone.classList.remove('dragover'); });
+            ui.dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                ui.dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
 
-                const maxDim = Math.max(maxX - minX, maxY - minY);
-                const targetDim = isMobile() ? 110 : 160;
-                if (maxDim > 0) {
-                    const newScale = Math.max(0.05, Math.round((targetDim / maxDim) * 100) / 100);
-                    state.scale = newScale;
-                    ui.inputs.scale.value = String(newScale);
-                    ui.labels.scale.innerText = formatNumber(newScale);
-                    const newMax = Math.max(5, Math.ceil(newScale * 2));
-                    ui.inputs.scale.max = String(newMax);
-                }
 
-                renderLayersUI();
-                queueGeometryUpdate();
-                setTimeout(() => fitCameraToModel(), 40);
-                if (isMobile()) toggleMobileMenu(false);
-            } catch (error) {
-                console.error(error);
-                alert(`SVG Error: ${error.message}`);
-                showLoading(false);
-            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            });
+
+
+            ui.btnProcess.addEventListener('click', applyFiltersAndProcess);
+
+
         }
 
         function handleFile(file) {
-            if (!file) return;
-            if (!file.name.toLowerCase().endsWith('.svg') && file.type !== 'image/svg+xml') {
-                alert('Please import an SVG file.');
-                return;
-            }
-            showLoading(true);
+            if (!file || !file.type.startsWith('image/')) return;
             const reader = new FileReader();
-            reader.onload = (e) => loadSVG(String(e.target?.result || ''));
-            reader.onerror = () => {
-                showLoading(false);
-                alert('Unable to read this file.');
+            reader.onload = (e) => {
+                state.rawImgSrc = e.target.result;
+                ui.miniPreview.src = state.rawImgSrc;
+                ui.miniPreview.classList.remove('hidden');
+
+                ui.views.empty.classList.add('hidden');
+                ui.transformLayer.classList.remove('hidden');
+
+
+
+
+
+
+                state.svgStr = null;
+                resetZoom();
+                applyFiltersToCanvas(); // Draw initial
+                updateProcessBtn(true);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                // Auto switch to split view to confirm image loaded
+                switchTab('split');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                // Auto close menu on mobile
+                if (window.innerWidth < 1024) toggleMenu(false);
+
+
+
+
+
+                // Initial auto-process
+                debouncedVectorization();
             };
-            reader.readAsText(file);
+            reader.readAsDataURL(file);
         }
 
-        async function exportSTL(separateFiles = false) {
-            if (state.modelGroup.children.length === 0) return;
-            const exporter = new STLExporter();
+        // --- Core Logic ---
+        function applyFiltersToCanvas() {
+            if (!state.rawImgSrc) return;
+            const img = new Image();
+            img.onload = () => {
+                let w = img.width;
+                let h = img.height;
 
-            if (separateFiles) {
-                const meshes = [...state.modelGroup.children];
-                for (const mesh of meshes) {
-                    const safeName = mesh.name.replace('#', '');
-                    meshes.forEach((m) => m.visible = false);
-                    mesh.visible = true;
-                    const result = exporter.parse(state.modelGroup, { binary: true });
-                    downloadBlob(result, `acidvect3d_${safeName}.stl`);
-                    await new Promise((resolve) => setTimeout(resolve, 120));
+                // Update Canvases
+                [ui.content.canvasPreview, ui.content.canvasSplit].forEach(canvas => {
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+
+
+                    const b = ui.inputs.brightness.value;
+                    const c = ui.inputs.contrast.value;
+                    ctx.filter = `brightness(${100 + parseInt(b)}%) contrast(${100 + parseInt(c)}%)`;
+
+
+
+
+                    ctx.drawImage(img, 0, 0, w, h);
+                });
+            };
+            img.src = state.rawImgSrc;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        }
+
+        function applyFiltersAndProcess() {
+            if (!state.rawImgSrc || state.processing || !state.engineReady) return;
+            // Ensure filters are applied to the canvas data we are about to read
+            state.filteredImgData = ui.content.canvasPreview.toDataURL('image/png');
+            runVectorization();
+
+
+        }
+
+        function runVectorization() {
+            state.processing = true;
+            // Update button to show processing state
+            updateProcessBtn(false, true);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            setTimeout(() => {
+                try {
+                    const opts = {
+                        numberofcolors: parseInt(ui.inputs.colors.value),
+                        blurradius: parseFloat(ui.inputs.blur.value),
+                        pathomit: parseInt(ui.inputs.omit.value),
+                        ltres: parseFloat(ui.inputs.ltres.value),
+                        qtres: parseFloat(ui.inputs.qtres.value),
+                        strokewidth: 0,
+                        viewbox: true,
+                        scale: 1
+                    };
+
+                    window.ImageTracer.imageToSVG(state.filteredImgData, (svgstr) => {
+                        state.svgStr = svgstr;
+                        renderSVG(svgstr);
+                        state.processing = false;
+                        updateProcessBtn(true);
+                        ui.btnDownloadSvg.disabled = false;
+                        ui.btnDownloadPng.disabled = false;
+
+                        // If we are on Result tab, ensure it's visible (handling potentially stale display:none)
+                        if (!ui.views.vector.classList.contains('hidden-tab')) {
+                            ui.views.vector.style.display = '';
+                        }
+                    }, opts);
+                } catch (err) {
+                    console.error(err);
+                    state.processing = false;
+                    updateProcessBtn(true);
+                    alert("Error during vectorization.");
                 }
-                meshes.forEach((m) => (m.visible = true));
-            } else {
-                const result = exporter.parse(state.modelGroup, { binary: true });
-                downloadBlob(result, 'acidvect3d_full.stl');
-            }
+            }, 50);
         }
 
-        function downloadBlob(data, filename) {
-            const blob = new Blob([data], { type: 'application/octet-stream' });
+        function renderSVG(svgstr) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(svgstr, "image/svg+xml");
+            const svgEl = doc.documentElement;
+
+            // Clean attributes to ensure scaling
+            svgEl.removeAttribute('width');
+            svgEl.removeAttribute('height');
+            svgEl.setAttribute('width', '100%');
+            svgEl.setAttribute('height', '100%');
+
+
+
+
+
+
+            const cleanSvg = svgEl.outerHTML;
+            ui.content.svgFull.innerHTML = cleanSvg;
+            ui.content.svgSplit.innerHTML = cleanSvg;
+
+
+
+
+
+
+        }
+
+        // --- Downloads ---
+        function downloadSVG() {
+            if (!state.svgStr) return;
+            const blob = new Blob([state.svgStr], { type: 'image/svg+xml' });
             const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Acid2Vect_${Date.now()}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
-        function rotateModel(axis) {
-            const angle = Math.PI / 2;
-            if (axis === 'x') state.currentObjectRotation.x += angle;
-            if (axis === 'y') state.currentObjectRotation.y += angle;
-            if (axis === 'z') state.currentObjectRotation.z += angle;
-            state.modelGroup.rotation.copy(state.currentObjectRotation);
+        function downloadPNG() {
+            if (!state.svgStr) return;
+            const img = new Image();
+            const svgBlob = new Blob([state.svgStr], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                canvas.width = ui.content.canvasPreview.width;
+                canvas.height = ui.content.canvasPreview.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const pngUrl = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = pngUrl;
+                a.download = `Acid2Vect_${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+            img.src = url;
         }
-        window.rotateModel = rotateModel;
 
-        ui.rotateButtons.forEach((btn) => {
-            btn.addEventListener('click', () => rotateModel(btn.dataset.rotate));
-        });
+        // --- Helpers ---
+        function updateProcessBtn(enabled, processing = false) {
+            const btn = ui.btnProcess;
 
-        ui.fileInput.addEventListener('change', (e) => handleFile(e.target.files?.[0]));
+            if (processing) {
+                btn.disabled = true;
+                btn.innerHTML = `<div class="loader !w-4 !h-4 !border-2"></div><span class="text-lime-400">UPDATING...</span>`;
+            } else if (enabled) {
+                btn.disabled = false;
+                btn.className = "w-full py-3 bg-lime-700 hover:bg-lime-600 text-white font-bold rounded-sm border border-lime-500 transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(132,204,22,0.3)]";
+                btn.innerHTML = `<i data-lucide="zap" class="w-4 h-4"></i><span>VECTORIZE</span>`;
 
-        ['dragenter', 'dragover'].forEach((eventName) => {
-            ui.dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                ui.dropZone.classList.add('dragover');
+
+
+
+            } else {
+                btn.disabled = true;
+                btn.className = "w-full py-3 bg-zinc-800 text-zinc-500 font-bold rounded-sm border border-zinc-700 transition flex items-center justify-center gap-2 cursor-not-allowed";
+                btn.innerHTML = `<span>STANDBY</span>`;
+            }
+            lucide.createIcons();
+        }
+
+        window.switchTab = function (name) {
+            ['original', 'split', 'vector'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const view = ui.views[t];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                if (t === name) {
+                    btn.classList.remove('text-zinc-400', 'hover:text-white');
+                    // Style specific per tab for active state
+                    if (t === 'split') btn.className = "px-4 py-1.5 text-xs font-bold rounded-full transition-colors bg-lime-600 text-black shadow-[0_0_10px_rgba(132,204,22,0.4)]";
+                    else btn.className = "px-4 py-1.5 text-xs font-bold rounded-full transition-colors bg-zinc-700 text-white border border-zinc-600";
+
+                    view.classList.remove('hidden-tab');
+
+                    // Explicitly manage display property to avoid conflicts with previous 'none' styles
+                    if (t === 'split') {
+                        view.style.display = 'flex';
+                    } else {
+                        view.style.display = ''; // Clear inline styles to let CSS class take over (block by default for divs)
+                    }
+                } else {
+                    btn.className = "px-4 py-1.5 text-xs font-bold rounded-full transition-colors text-zinc-400 hover:text-white";
+                    view.classList.add('hidden-tab');
+                    view.style.display = 'none'; // Force hide
+                }
             });
-        });
+            resetZoom();
+        }
 
-        ['dragleave', 'dragend'].forEach((eventName) => {
-            ui.dropZone.addEventListener(eventName, () => ui.dropZone.classList.remove('dragover'));
-        });
+        // --- Zoom / Pan ---
+        function initZoomPan() {
+            const viewport = ui.viewport;
 
-        ui.dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            ui.dropZone.classList.remove('dragover');
-            if (e.dataTransfer?.files?.length) handleFile(e.dataTransfer.files[0]);
-        });
+            const handleStart = (clientX, clientY) => {
+                state.panning = true;
+                state.startX = clientX - state.panX;
+                state.startY = clientY - state.panY;
+                viewport.classList.add('cursor-grabbing');
+            };
 
-        const updateParam = (key, value, labelKey, decimals = 2) => {
-            const numericValue = Number(value);
-            state[key] = numericValue;
-            if (labelKey && ui.labels[labelKey]) ui.labels[labelKey].innerText = formatNumber(numericValue, decimals);
-            queueGeometryUpdate();
+            const handleMove = (clientX, clientY) => {
+                if (!state.panning) return;
+                state.panX = clientX - state.startX;
+                state.panY = clientY - state.startY;
+                applyTransform();
+            };
+
+            const handleEnd = () => {
+                state.panning = false;
+                viewport.classList.remove('cursor-grabbing');
+            };
+
+            // Mouse
+            viewport.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
+            window.addEventListener('mouseup', handleEnd);
+            window.addEventListener('mousemove', e => { e.preventDefault(); handleMove(e.clientX, e.clientY); });
+            viewport.addEventListener('wheel', e => {
+                e.preventDefault();
+                zoomCanvas(e.deltaY > 0 ? -0.1 : 0.1);
+            }, { passive: false });
+
+            // Touch
+            viewport.addEventListener('touchstart', e => {
+                if (e.touches.length === 1) handleStart(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: false });
+            viewport.addEventListener('touchmove', e => {
+                if (state.panning && e.touches.length === 1) {
+                    e.preventDefault();
+                    handleMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: false });
+            window.addEventListener('touchend', handleEnd);
+        }
+
+        window.zoomCanvas = (delta) => {
+            state.scale = Math.min(Math.max(0.1, state.scale + delta), 5);
+            if (ui.zoomLevel) ui.zoomLevel.innerText = `${Math.round(state.scale * 100)}%`;
+            applyTransform();
         };
 
-        ui.inputs.bevel.addEventListener('input', (e) => updateParam('bevelThickness', e.target.value, 'bevel', 2));
-        ui.inputs.segments.addEventListener('input', (e) => updateParam('bevelSegments', e.target.value, 'segments', 0));
-        ui.inputs.scale.addEventListener('input', (e) => updateParam('scale', e.target.value, 'scale', 2));
-        ui.inputs.spacing.addEventListener('input', (e) => updateParam('spacing', e.target.value, 'spacing', 0));
+        window.resetZoom = () => {
+            state.scale = 1; state.panX = 0; state.panY = 0;
+            if (ui.zoomLevel) ui.zoomLevel.innerText = "100%";
+            applyTransform();
+        };
 
-        ui.inputs.bottomBevel.addEventListener('change', (e) => {
-            state.bottomBevel = e.target.checked;
-            queueGeometryUpdate();
-        });
 
-        ui.inputs.wireframe.addEventListener('change', (e) => {
-            state.wireframe = e.target.checked;
-            queueGeometryUpdate();
-        });
 
-        ui.btnFlipH.addEventListener('click', () => {
-            state.flipH = !state.flipH;
-            ui.btnFlipH.classList.toggle('active', state.flipH);
-            queueGeometryUpdate();
-        });
 
-        ui.btnFlipV.addEventListener('click', () => {
-            state.flipV = !state.flipV;
-            ui.btnFlipV.classList.toggle('active', state.flipV);
-            queueGeometryUpdate();
-        });
 
-        ui.btnExportCombined.addEventListener('click', () => exportSTL(false));
-        ui.btnExportSeparate.addEventListener('click', () => exportSTL(true));
 
-        renderer.domElement.addEventListener('pointerdown', () => {
-            if (isMobile() && state.isMobileMenuOpen) toggleMobileMenu(false);
-        });
 
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && isMobile() && state.isMobileMenuOpen) {
-                toggleMobileMenu(false);
-            }
-        });
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-            if (!isMobile()) {
-                setMobileMenu(false);
-                ui.sidebar.classList.remove('-translate-x-full');
-            } else if (!state.isMobileMenuOpen) {
-                ui.sidebar.classList.add('-translate-x-full');
-            }
-        });
 
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
+
+        function applyTransform() {
+            ui.transformLayer.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.scale})`;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         }
 
-        updateStats(0, 0);
-        setExportButtonsEnabled(false);
-        if (!isMobile()) {
-            ui.sidebar.classList.remove('-translate-x-full');
-        }
-        animate();
+
+
+
+
+
+
     </script>
 </body>
 
